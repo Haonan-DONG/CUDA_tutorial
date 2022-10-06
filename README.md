@@ -14,5 +14,5 @@ nvcc -g -G *.cu -o main
 All the code is tested on a RTX 3090 Card (SM_86 with CUDA 11.1).
 
 ## To-do List
-- [] Fixed the bug for the memory.
-- [] Create the blog for each demo.
+- [ ] Fixed the bug for the memory.
+- [ ] Create the blog for each demo.
