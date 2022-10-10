@@ -10,10 +10,15 @@ void sumArrays(float *a, float *b, float *res, const int size)
         res[i] = a[i] + b[i];
     }
 }
-__global__ void sumArraysGPU(float *a, float *b, float *res)
+
+__global__ void sumArraysGPU(float *a, float *b, float *res, int size)
 {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    res[i] = a[i] + b[i];
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    while (tid < size)
+    {
+        res[tid] = a[tid] + b[tid];
+        tid += blockDim.x * gridDim.x;
+    }
 }
 
 int main(int argc, char **argv)
@@ -21,7 +26,7 @@ int main(int argc, char **argv)
     int dev = 0;
     cudaSetDevice(dev);
 
-    int nElem = 32 * 32 * 32 * 32;
+    int nElem = 32 * 32 * 32 * 32 * 32;
     printf("Vector size:%d\n", nElem);
     int nByte = sizeof(float) * nElem;
     float *a_h = (float *)malloc(nByte);
@@ -42,15 +47,15 @@ int main(int argc, char **argv)
     CHECK(cudaMemcpy(a_d, a_h, nByte, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(b_d, b_h, nByte, cudaMemcpyHostToDevice));
 
-    dim3 block(nElem / 2);
-    dim3 grid(nElem / block.x);
+    dim3 block(1024);
+    dim3 grid(256);
     float time_gpu;
     cudaEvent_t start_gpu, stop_gpu;
     cudaEventCreate(&start_gpu);
     cudaEventCreate(&stop_gpu);
     cudaEventRecord(start_gpu, 0);
 
-    sumArraysGPU<<<grid, block>>>(a_d, b_d, res_d);
+    sumArraysGPU<<<grid, block>>>(a_d, b_d, res_d, nElem);
 
     cudaEventRecord(stop_gpu, 0);
     cudaEventSynchronize(stop_gpu);
