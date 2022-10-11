@@ -22,6 +22,9 @@ This demo introduces how to add two large arrays (larger than the maximum thread
 2. Notice
 - Using the while loop to operate the parallel function to add the large arrays.
 - Using **CUDASynchronize()** to calculate the time on GPU, separately.
+
+3. Remaining
+- [ ] Why the maximum thread for RTX 3090 here is 1024 in one dim.
 ### 
 ## To-do List
 - [x] Fixed the bug for the memory.

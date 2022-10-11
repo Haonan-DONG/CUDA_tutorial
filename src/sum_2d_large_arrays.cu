@@ -17,8 +17,6 @@ __global__ void sumArraysGPU(float *a, float *b, float *res, int size)
     while (tid < size)
     {
         res[tid] = a[tid] + b[tid];
-
-        // here the blockdim and griddim took the whole size apart equally.
         tid += blockDim.x * gridDim.x;
     }
 }
@@ -28,7 +26,7 @@ int main(int argc, char **argv)
     int dev = 0;
     cudaSetDevice(dev);
 
-    int nElem = 32 * 32 * 32 * 32 * 32 * 4;
+    int nElem = 32 * 32 * 32 * 32 * 32;
     printf("Vector size:%d\n", nElem);
     int nByte = sizeof(float) * nElem;
     float *a_h = (float *)malloc(nByte);
@@ -49,7 +47,6 @@ int main(int argc, char **argv)
     CHECK(cudaMemcpy(a_d, a_h, nByte, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(b_d, b_h, nByte, cudaMemcpyHostToDevice));
 
-    // remaining
     dim3 block(1024);
     dim3 grid(64);
     double iStart, iElaps;
