@@ -48,21 +48,14 @@ int main(int argc, char **argv)
     CHECK(cudaMemcpy(b_d, b_h, nByte, cudaMemcpyHostToDevice));
 
     dim3 block(1024);
-    dim3 grid(256);
-    float time_gpu;
-    cudaEvent_t start_gpu, stop_gpu;
-    cudaEventCreate(&start_gpu);
-    cudaEventCreate(&stop_gpu);
-    cudaEventRecord(start_gpu, 0);
+    dim3 grid(64);
+    double iStart, iElaps;
+    iStart = cpuSecond();
 
     sumArraysGPU<<<grid, block>>>(a_d, b_d, res_d, nElem);
+    cudaDeviceSynchronize();
+    iElaps = cpuSecond() - iStart;
 
-    cudaEventRecord(stop_gpu, 0);
-    cudaEventSynchronize(stop_gpu);
-
-    cudaEventElapsedTime(&time_gpu, start_gpu, stop_gpu);
-    cudaEventDestroy(start_gpu);
-    cudaEventDestroy(stop_gpu);
     printf("Execution configuration<<<%d,%d>>>\n", block.x, grid.x);
 
     CHECK(cudaMemcpy(res_from_gpu_h, res_d, nByte, cudaMemcpyDeviceToHost));
@@ -75,7 +68,7 @@ int main(int argc, char **argv)
     time_cpu = (float)(stop_cpu - start_cpu) / CLOCKS_PER_SEC;
 
     std::cout << "cpu time : " << time_cpu << "\t"
-              << "gpu time : " << time_gpu << std::endl;
+              << "gpu time : " << iElaps << std::endl;
 
     checkResult(res_h, res_from_gpu_h, nElem);
     cudaFree(a_d);
