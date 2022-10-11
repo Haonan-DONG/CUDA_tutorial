@@ -1,5 +1,5 @@
 # CUDA Tutorial
-This is a basic tutorial for learning CUDA.
+This is a basic tutorial for learning CUDA. The motivation is to present several examples for indicating the basic usage by CUDA, since there exists many blogs for the principle while the examples is deficient.
 
 ## How to use
 ```shell
@@ -14,7 +14,7 @@ nvcc -g -G *.cu -o main
 All the code is tested on a RTX 3090 Card (SM_86 with CUDA 11.1).
 
 ## Syllabus
-### Demo 1 : sum_large_arrays.cu
+### Demo 1 : sum_1d_large_arrays.cu
 1. Introduce
 
 This demo introduces how to add two large arrays (larger than the maximum thread number, eg, 1024).
