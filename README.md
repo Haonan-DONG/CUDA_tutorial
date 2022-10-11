@@ -26,5 +26,5 @@ This demo introduces how to add two large arrays (larger than the maximum thread
 ## To-do List
 - [x] Fixed the bug for the memory.
 - [x] Create the blog for each demo.
-- [] Image Convolution Process.
-- [] PatchMatchStereo Algorithm by CUDA.
+- [ ] Image Convolution Process.
+- [ ] PatchMatchStereo Algorithm by CUDA.
