@@ -11,4 +11,5 @@ include_directories(include)
 
 set(CUDA_NVCC_FLAGS -gencode arch=compute_86,code=sm_86)
 
-cuda_add_executable(main src/sum_1d_large_arrays.cu)
+cuda_add_executable(1d_large_array src/sum_1d_large_arrays.cu)
+cuda_add_executable(2d_large_array src/sum_2d_large_arrays.cu)

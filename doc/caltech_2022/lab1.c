@@ -78,6 +78,26 @@ void test5()
     a = NULL;
 }
 
+void test6()
+{
+    struct person
+    {
+        char gender;
+        char name;
+        int age;
+        float offset;
+        double offset_1;
+    };
+
+    struct person john;
+    john.age = 26;
+    john.gender = 'm';
+    john.name = 'j';
+    john.offset = 234.234;
+
+    printf("%#X\t%#X\t%#X\t%#X\t%#X\t%#X\n", &john, &(john.age), &(john.gender), &(john.name), &(john.offset), &(john.offset_1));
+}
+
 int main()
 {
     test1();
@@ -89,6 +109,8 @@ int main()
     test4();
 
     test5();
+
+    test6();
 
     return 0;
 }

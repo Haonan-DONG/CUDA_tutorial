@@ -13,7 +13,7 @@ nvcc -g -G *.cu -o main
 ## Note
 All the code is tested on a RTX 3090 Card (SM_86 with CUDA 11.1).
 
-## Syllabus
+## Source
 ### Demo 1 : sum_1d_large_arrays.cu
 1. Introduce
 
@@ -25,9 +25,15 @@ This demo introduces how to add two large arrays (larger than the maximum thread
 
 3. Remaining
 - [ ] Why the maximum thread for RTX 3090 here is 1024 in one dim.
-### 
+### Demo 2 : sum_2d_large_arrays.cu
+
 ## To-do List
 - [x] Fixed the bug for the memory.
 - [x] Create the blog for each demo.
 - [ ] Image Convolution Process.
 - [ ] PatchMatchStereo Algorithm by CUDA.
+
+
+## Acknowledge
+- [Sheng Tan's repo](https://github.com/Tony-Tan/CUDA_Freshman)
+- [Caltech 2022](http://courses.cms.caltech.edu/cs179/)
