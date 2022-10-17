@@ -25,7 +25,11 @@ This demo introduces how to add two large arrays (larger than the maximum thread
 
 3. Remaining
 - [ ] Why the maximum thread for RTX 3090 here is 1024 in one dim.
+
 ### Demo 2 : sum_2d_large_arrays.cu
+1. Introduce
+
+This demo introduces how to add two large 2d matrix.
 
 ## To-do List
 - [x] Fixed the bug for the memory.

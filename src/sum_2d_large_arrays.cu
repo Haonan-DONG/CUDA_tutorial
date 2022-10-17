@@ -1,73 +1,107 @@
 #include <cuda_runtime.h>
-#include <iostream>
+#include <stdio.h>
 #include "global.h"
-
-void sum2DArrays(float **a, float **b, float **res, const int height, const int width)
+void sumMatrix2D_CPU(float *MatA, float *MatB, float *MatC, int nx, int ny)
 {
-    for (int i = 0; i < height; i++)
+    float *a = MatA;
+    float *b = MatB;
+    float *c = MatC;
+    for (int j = 0; j < ny; j++)
     {
-        for (int j = 0; j < width; j++)
+        for (int i = 0; i < nx; i++)
         {
-            res[i][j] = a[i][j] + b[i][j];
+            c[i] = a[i] + b[i];
         }
+        c += nx;
+        b += nx;
+        a += nx;
+    }
+}
+__global__ void sumMatrix(float *MatA, float *MatB, float *MatC, int nx, int ny)
+{
+    int ix = threadIdx.x + blockDim.x * blockIdx.x;
+    int iy = threadIdx.y + blockDim.y * blockIdx.y;
+    int idx = ix + iy * ny;
+    if (ix < nx && iy < ny)
+    {
+        MatC[idx] = MatA[idx] + MatB[idx];
     }
 }
 
-// void sum2DArraysGPU(float **a, float **b, float **res, const int height, const int width)
-// {
-//     int thread_x = threadIdx.x + threadIdx.x * blockDim.x;
-//     int thread_y = threadIdx.y + threadIdx.y * blockIdx.y;
-
-//     // be careful with the parallel.
-//     res[thread_x][thread_y] = a[thread_x][thread_y] + b[thread_x][thread_y];
-// }
-
-int main()
+int main(int argc, char **argv)
 {
-    // the id of the device.
-    int dev = 1;
-    cudaSetDevice(dev);
+    // printf("strating...\n");
+    // initDevice(0);
+    int nx = 1 << 14;
+    int ny = 1 << 14;
+    int nxy = nx * ny;
+    int nBytes = nxy * sizeof(float);
+    printf("Total Data is %d * %d\n", nx, ny);
 
-    int nElem = 1024;
-    std::cout << "The array size is " << nElem
-              << "*" << nElem
-              << ", total with " << nElem * nElem
-              << std::endl;
-    // allocate the size
-    float **a = new float *[nElem];
-    float **b = new float *[nElem];
-    float **c = new float *[nElem];
-    for (int i = 0; i < nElem; i++)
-    {
-        a[i] = new float[nElem];
-        b[i] = new float[nElem];
-        c[i] = new float[nElem]{0};
-    }
+    // Malloc
+    float *A_host = (float *)malloc(nBytes);
+    float *B_host = (float *)malloc(nBytes);
+    float *C_host = (float *)malloc(nBytes);
+    float *C_from_gpu = (float *)malloc(nBytes);
+    initialData(A_host, nxy);
+    initialData(B_host, nxy);
 
-    float(*a_gpu)[nElem], (*b_gpu)[nElem], (*c_gpu)[nElem];
-    cudaMalloc((void **)&a_gpu, (nElem * nElem) * sizeof(int));
-    cudaMalloc((void **)&b_gpu, (nElem * nElem) * sizeof(int));
-    cudaMalloc((void **)&c_gpu, (nElem * nElem) * sizeof(int));
+    // cudaMalloc
+    float *A_dev = NULL;
+    float *B_dev = NULL;
+    float *C_dev = NULL;
+    size_t pitch;
+    // CHECK(cudaMalloc((void **)&A_dev, nBytes));
+    // CHECK(cudaMalloc((void **)&B_dev, nBytes));
+    // CHECK(cudaMalloc((void **)&C_dev, nBytes));
 
-    initialData2D(a, nElem, nElem);
-    initialData2D(b, nElem, nElem);
+    cudaMallocPitch(&A_dev, &pitch, nx, ny);
+    cudaMallocPitch(&B_dev, &pitch, nx, ny);
+    cudaMallocPitch(&C_dev, &pitch, nx, ny);
 
-    // CHECK(cudaMemcpy(a, a_gpu, (nElem * nElem) * sizeof(int), cudaMemcpyHostToDevice));
-    // CHECK(cudaMemcpy(b, b_gpu, (nElem * nElem) * sizeof(int), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(A_dev, A_host, nBytes, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(B_dev, B_host, nBytes, cudaMemcpyHostToDevice));
 
-    clock_t start_cpu, stop_cpu;
-    float time_cpu;
-    start_cpu = clock();
-    sum2DArrays(a, b, c, nElem, nElem);
-    stop_cpu = clock();
+    int dimx = argc > 2 ? atoi(argv[1]) : 32;
+    int dimy = argc > 2 ? atoi(argv[2]) : 32;
 
-    time_cpu = (float)(stop_cpu - start_cpu) / CLOCKS_PER_SEC;
+    double iStart, iElaps;
+    // cpu compute
+    iStart = cpuSecond();
+    sumMatrix2D_CPU(A_host, B_host, C_host, nx, ny);
+    iElaps = cpuSecond() - iStart;
+    printf("CPU Execution Time elapsed %f sec\n", iElaps);
 
-    std::cout << "CPU time : " << time_cpu << std::endl;
+    // warm up
+    //  2d block and 2d grid
+    // dim3 block_0(32, 32);
+    // dim3 grid_0((nx - 1) / block_0.x + 1, (ny - 1) / block_0.y + 1);
+    // iStart = cpuSecond();
+    // sumMatrix<<<grid_0, block_0>>>(A_dev, B_dev, C_dev, nx, ny);
+    // CHECK(cudaDeviceSynchronize());
+    // printf("Warm Up \n");
 
-    delete[] a;
-    delete[] b;
-    delete[] c;
+    // 2d block and 2d grid
+    dim3 block(dimx, dimy);
+    dim3 grid((nx - 1) / block.x + 1, (ny - 1) / block.y + 1);
+    iStart = cpuSecond();
+    sumMatrix<<<grid, block>>>(A_dev, B_dev, C_dev, nx, ny);
+    CHECK(cudaDeviceSynchronize());
+    iElaps = cpuSecond() - iStart;
+    printf("GPU Execution configuration<<<(%d,%d),(%d,%d)>>> Time elapsed %f sec\n",
+           grid.x, grid.y, block.x, block.y, iElaps);
+    CHECK(cudaMemcpy(C_from_gpu, C_dev, nBytes, cudaMemcpyDeviceToHost));
+
+    checkResult(C_host, C_from_gpu, nxy);
+
+    cudaFree(A_dev);
+    cudaFree(B_dev);
+    cudaFree(C_dev);
+    free(A_host);
+    free(B_host);
+    free(C_host);
+    free(C_from_gpu);
+    cudaDeviceReset();
 
     return 0;
 }
